@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Moss music backup shell script thingy
+# by Dustin "giggybyte" Smith
+# Contact me for questions in irc.oftc.net in #wuvt
+# Or email me at dws@vt.edu
+
+# Helpful variables
+BASE_URL="http://alexandria.wuvt.vt.edu:9070"
+
+# File cleanup from previous runs
+rm uuid-list.txt
+rm -r uuids/
+
+# Grab the list of UUIDs
+curl $BASE_URL -o uuid-list.txt -ss
+
+# Remove the bracket and quote at the top of the file
+cat uuid-list.txt | cut -c 3- > uuid-list-2.txt
+
+# Remove the quote and bracket at the bottom of the file
+cat uuid-list-2.txt | rev | cut -c 3- | rev > uuid-list-3.txt
+
+# Regular expression to get each UUID on its own line
+sed -i "s/\",\"/\n/g" uuid-list-3.txt
+
+# File cleanup
+rm uuid-list.txt
+rm uuid-list-2.txt
+mv uuid-list-3.txt uuid-list.txt
+
+# Get a line count, for tracking progress
+LINECOUNT=$(wc -l < uuid-list.txt)
+ITERATOR=1
+
+# Make directory for UUIDs
+mkdir uuids
+
+# Iterate through each UUID and download the list of songs
+while read UUID
+do
+	echo "--- Handling UUID $ITERATOR of $LINECOUNT ---"
+	# Stores current line in variable
+	FILELINE=$(echo $UUID)
+	# Download the song list
+	curl $BASE_URL/$UUID/ -o uuids/$UUID.txt -ss
+	# Check if the UUID is unlocked and skip if it so.
+	LOCKSTATUS=$(cat uuids/$UUID.txt | jq '.Locked')
+	# Debug print to make sure the variable was being set correctly.
+	# echo "Lock status: $LOCKSTATUS"
+	if [ "$LOCKSTATUS" == "false" ]; then
+		echo "     > Skipped (UUID not locked!)"
+		let "ITERATOR=ITERATOR+1"
+	else
+		# Use cut/sed to trim out extraneous characters
+		cat uuids/$UUID.txt | cut -c 15- > uuids/${UUID}-1.txt
+		cat uuids/${UUID}-1.txt | rev | cut -c 36- | rev > uuids/$UUID
+		sed -i "s/\",\"/\n/g" uuids/$UUID
+		sed -i "s/\"//g" uuids/$UUID
+		# Clean up junk
+		rm uuids/${UUID}-1.txt
+		# Download the songs and other files
+		mkdir uuids/${UUID}-files/
+		FILECOUNT=$(wc -l < uuids/$UUID)
+		ITERATOR2=1
+		while read UUIDFILE
+		do
+			echo "     > Downloading file $ITERATOR2 of $FILECOUNT"
+			curl "$BASE_URL/$UUID/music/$UUIDFILE" -o "uuids/${UUID}-files/$UUIDFILE" -ss
+			let "ITERATOR2=ITERATOR2+1"
+		done < uuids/$UUID
+		# i++
+		let "ITERATOR=ITERATOR+1"
+	fi
+done < uuid-list.txt
