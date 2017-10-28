@@ -97,6 +97,7 @@ do
 		while read UUIDFILE
 		do
 			echo "     > Downloading file $ITERATOR2 of $FILECOUNT"
+			echo "$BASE_URL/$UUID/music/$UUIDFILE"
 			curl "$BASE_URL/$UUID/music/$UUIDFILE" -o "uuids/${UUID}-files/$UUIDFILE" -ss
 			let "ITERATOR2=ITERATOR2+1"
 		done < uuids/$UUID
