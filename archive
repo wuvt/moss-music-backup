@@ -25,8 +25,9 @@ else
 	MODE="$1"
 fi
 
-# If using rclone for gdrive, ask for name of account, and folder to upload to.
-if [ $GD_CURR -lt 2 ]; then
+# Prompt user for rclone account and folder to upload to.
+if [ "$MODE" == "gdrive" ]; then
+	echo "Please ensure that rclone is in your current working directory."
 	read -p "rclone account name: " GD_ACC
 	read -p "folder to upload to: " GD_FOLDER
 fi
@@ -93,9 +94,7 @@ do
 			let "ITERATOR2=ITERATOR2+1"
 		done < uuids/$UUID
 		# Upload songs via rclone if asked
-		if [ GD_CURR == 0 ]; then
-			rclone copy uuids/${UUID}-files/ ${GD_ACC}:${GD_FOLDER}/ -v
-		elif [ GD_CURR == 1 ]; then
+		if [ "$MODE" == "gdrive" ]; then
 			./rclone copy uuids/${UUID}-files/ ${GD_ACC}:${GD_FOLDER}/ -v
 		fi
 		# i++
