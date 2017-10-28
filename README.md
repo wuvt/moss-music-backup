@@ -13,9 +13,9 @@ moss-music-backup, by giggybyte for wuvt
 ```
 
 ## gdrive
-Backing up files over Google Drive requies rclone, which is bundled with this repo.
-Run ./rclone config to set up your account, and make note of the nickname you give the account.
-./archive will ask you for the name you created, as well as the folder you want to save it to.
+Backing up files over Google Drive requies rclone, which is bundled with this repo.  
+Run ./rclone config to set up your account, and make note of the nickname you give the account.  
+./archive will ask you for the name you created, as well as the folder you want to save it to.  
 This option should theoretically work with other cloud storage services, but I don't own the other ones to test it and find out.
 
 ## TODO
