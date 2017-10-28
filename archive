@@ -32,6 +32,13 @@ if [ "$MODE" == "gdrive" ]; then
 	read -p "folder to upload to: " GD_FOLDER
 fi
 
+# Tell user that scp isn't implemented yet :(
+if [ "$MODE" == "scp" ]; then
+	echo "Sorry, scp has yet to be implemented."
+	echo "Pester giggybyte on IRC if you need this sooner."
+	exit 1
+fi
+
 # Delete leftover files from previous runs.
 rm uuid-list.txt
 rm -r uuids/
