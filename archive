@@ -8,7 +8,31 @@
 # Helpful variables
 BASE_URL="http://alexandria.wuvt.vt.edu:9070"
 
-# File cleanup from previous runs
+# Argument handling
+if [ $# != 1 ]; then
+	echo ""
+	echo "moss-music-backup, by giggybyte for wuvt"
+	echo "./archive        -- returns this help msg"
+	echo "./archive local  -- saves files to this machine"
+	echo "./archive gdrive -- saves files to google drive"
+	echo "./archive scp    -- saves files over scp to another machine"
+	echo ""
+	exit 0
+elif [ "$1" != "local" ] && [ "$1" != "scp" ] && [ "$1" != "gdrive" ]; then
+	echo "Invalid argument -- run ./archive without args to see help!."
+	exit 1
+else
+	MODE="$1"
+fi
+
+# Prompt user for rclone account and folder to upload to.
+if [ "$MODE" == "gdrive" ]; then
+	echo "Please ensure that rclone is in your current working directory."
+	read -p "rclone account name: " GD_ACC
+	read -p "folder to upload to: " GD_FOLDER
+fi
+
+# Delete leftover files from previous runs.
 rm uuid-list.txt
 rm -r uuids/
 
@@ -69,6 +93,12 @@ do
 			curl "$BASE_URL/$UUID/music/$UUIDFILE" -o "uuids/${UUID}-files/$UUIDFILE" -ss
 			let "ITERATOR2=ITERATOR2+1"
 		done < uuids/$UUID
+		# Upload songs via rclone if asked
+		if [ "$MODE" == "gdrive" ]; then
+			./rclone copy uuids/${UUID}-files/ ${GD_ACC}:${GD_FOLDER}/${UUID}-files/ -v
+			# Since this is a remote backup, we can delete the local folder after it uploads
+			rm -rf uuids/${UUID}-files
+		fi
 		# i++
 		let "ITERATOR=ITERATOR+1"
 	fi
