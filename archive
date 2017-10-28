@@ -95,7 +95,7 @@ do
 		done < uuids/$UUID
 		# Upload songs via rclone if asked
 		if [ "$MODE" == "gdrive" ]; then
-			./rclone copy uuids/${UUID}-files/ ${GD_ACC}:${GD_FOLDER}/ -v
+			./rclone copy uuids/${UUID}-files/ ${GD_ACC}:${GD_FOLDER}/${UUID}-files/ -v
 			# Since this is a remote backup, we can delete the local folder after it uploads
 			rm -rf uuids/${UUID}-files
 		fi
