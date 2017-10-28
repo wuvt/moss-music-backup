@@ -25,28 +25,6 @@ else
 	MODE="$1"
 fi
 
-GD_CURR=2
-# Check if rclone exists if using the gdrive option.
-if [ "$MODE" == "gdrive" ]; then
-	echo "[*] Checking if rclone exists."
-	GD_CHECK=$(type rclone)
-	if echo $GD_CHECK | grep "hashed"; then
-		echo "[!] Didn't find rclone via type."
-		if [ ! -f rclone ]; then
-			echo "[!] Didn't find rclone in current directory. Exiting."
-			echo "[!] Please install rclone!"
-			exit 1
-		else
-			echo "[*] Found rclone in the current directory."
-			GD_CURR=1
-			# GD_CURR will tell us whether we need to run rclone or ./rclone.
-		fi
-	else
-		echo "[*] Found rclone."
-		GD_CURR=0
-	fi
-fi
-
 # If using rclone for gdrive, ask for name of account, and folder to upload to.
 if [ $GD_CURR -lt 2 ]; then
 	read -p "rclone account name: " GD_ACC
