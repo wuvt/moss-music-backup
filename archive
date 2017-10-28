@@ -8,7 +8,52 @@
 # Helpful variables
 BASE_URL="http://alexandria.wuvt.vt.edu:9070"
 
-# File cleanup from previous runs
+# Argument handling
+if [ $# != 1 ]; then
+	echo ""
+	echo "moss-music-backup, by giggybyte for wuvt"
+	echo "./archive        -- returns this help msg"
+	echo "./archive local  -- saves files to this machine"
+	echo "./archive gdrive -- saves files to google drive"
+	echo "./archive scp    -- saves files over scp to another machine"
+	echo ""
+	exit 0
+elif [ "$1" != "local" ] && [ "$1" != "scp" ] && [ "$1" != "gdrive" ]; then
+	echo "Invalid argument -- run ./archive without args to see help!."
+	exit 1
+else
+	MODE="$1"
+fi
+
+GD_CURR=2
+# Check if rclone exists if using the gdrive option.
+if [ "$MODE" == "gdrive" ]; then
+	echo "[*] Checking if rclone exists."
+	GD_CHECK=$(type rclone)
+	if echo $GD_CHECK | grep "hashed"; then
+		echo "[!] Didn't find rclone via type."
+		if [ ! -f rclone ]; then
+			echo "[!] Didn't find rclone in current directory. Exiting."
+			echo "[!] Please install rclone!"
+			exit 1
+		else
+			echo "[*] Found rclone in the current directory."
+			GD_CURR=1
+			# GD_CURR will tell us whether we need to run rclone or ./rclone.
+		fi
+	else
+		echo "[*] Found rclone."
+		GD_CURR=0
+	fi
+fi
+
+# If using rclone for gdrive, ask for name of account, and folder to upload to.
+if [ $GD_CURR -lt 2 ]; then
+	read -p "rclone account name: " GD_ACC
+	read -p "folder to upload to: " GD_FOLDER
+fi
+
+# Delete leftover files from previous runs.
 rm uuid-list.txt
 rm -r uuids/
 
@@ -69,6 +114,12 @@ do
 			curl "$BASE_URL/$UUID/music/$UUIDFILE" -o "uuids/${UUID}-files/$UUIDFILE" -ss
 			let "ITERATOR2=ITERATOR2+1"
 		done < uuids/$UUID
+		# Upload songs via rclone if asked
+		if [ GD_CURR == 0 ]; then
+			rclone copy uuids/${UUID}-files/ ${GD_ACC}:${GD_FOLDER}/ -v
+		elif [ GD_CURR == 1 ]; then
+			./rclone copy uuids/${UUID}-files/ ${GD_ACC}:${GD_FOLDER}/ -v
+		fi
 		# i++
 		let "ITERATOR=ITERATOR+1"
 	fi
