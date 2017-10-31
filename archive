@@ -9,34 +9,25 @@
 BASE_URL="http://alexandria.wuvt.vt.edu:9070"
 
 # Argument handling
-if [ $# != 1 ]; then
+if [ $# != 2 ]; then
 	echo ""
 	echo "moss-music-backup, by giggybyte for wuvt"
 	echo "./archive        -- returns this help msg"
 	echo "./archive local  -- saves files to this machine"
-	echo "./archive gdrive -- saves files to google drive"
-	echo "./archive scp    -- saves files over scp to another machine"
+	echo "./archive rclone-account rclone-folder "
+	echo "                 -- saves files via rclone"
 	echo ""
 	exit 0
-elif [ "$1" != "local" ] && [ "$1" != "scp" ] && [ "$1" != "gdrive" ]; then
-	echo "Invalid argument -- run ./archive without args to see help!."
-	exit 1
-else
-	MODE="$1"
+elif [ $# == 2 ]; then
+	MODE="rclone"
 fi
 
 # Prompt user for rclone account and folder to upload to.
-if [ "$MODE" == "gdrive" ]; then
+if [ "$MODE" == "rclone" ]; then
 	echo "Please ensure that rclone is in your current working directory."
-	read -p "rclone account name: " GD_ACC
-	read -p "folder to upload to: " GD_FOLDER
-fi
-
-# Tell user that scp isn't implemented yet :(
-if [ "$MODE" == "scp" ]; then
-	echo "Sorry, scp has yet to be implemented."
-	echo "Pester giggybyte on IRC if you need this sooner."
-	exit 1
+	echo "Also, please make rclone.conf is there as well."
+	GD_ACC="$1"
+	GC_FOLDER="$2"
 fi
 
 # Delete leftover files from previous runs.
@@ -102,8 +93,9 @@ do
 			let "ITERATOR2=ITERATOR2+1"
 		done < uuids/$UUID
 		# Upload songs via rclone if asked
-		if [ "$MODE" == "gdrive" ]; then
-			./rclone copy uuids/${UUID}-files/ ${GD_ACC}:${GD_FOLDER}/${UUID}-files/ -v
+		if [ "$MODE" == "rclone" ]; then
+			./rclone copy uuids/${UUID}-files/ ${GD_ACC}:${GD_FOLDER}/${UUID}-files/ -v \
+				--config=rclone.conf
 			# Since this is a remote backup, we can delete the local folder after it uploads
 			rm -rf uuids/${UUID}-files
 		fi
