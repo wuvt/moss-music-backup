@@ -88,8 +88,10 @@ do
 		while read UUIDFILE
 		do
 			echo "     > Downloading file $ITERATOR2 of $FILECOUNT"
-			echo "$BASE_URL/$UUID/music/$UUIDFILE"
-			curl "$BASE_URL/$UUID/music/$UUIDFILE" -o "uuids/${UUID}-files/$UUIDFILE" -ss
+			# Found a major bug here earlier -- %20 needs to be encoded into the URL,
+			# we can't just use spaces. Using regex to replace spaces with %20.
+			UUIDFILEFIX=$(sed "s/ /%20/g" <<< `echo $UUIDFILE`)
+			curl "$BASE_URL/$UUID/music/$UUIDFILEFIX" -o "uuids/${UUID}-files/$UUIDFILE" -ss 
 			let "ITERATOR2=ITERATOR2+1"
 		done < uuids/$UUID
 		# Upload songs via rclone if asked
